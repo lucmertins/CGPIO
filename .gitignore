@@ -1,1 +1,8 @@
 gpiotest
+**/Debug/
+**/Release/
+**/html/
+**/Backup/
+**/*.bak
+**/.~lock.*
+*.stackdump
