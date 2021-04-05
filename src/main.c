@@ -90,7 +90,7 @@ void teste()
 	gpiod_chip_close(chip3);
 }
 
-void main()
+int main()
 {
 
 	teste();
