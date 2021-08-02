@@ -4,51 +4,46 @@
 #include <string.h>
 #include <unistd.h>
 
-struct gpiod_chip *openGPIOChip(char *gpio)
-{
+struct gpiod_chip* openGPIOChip(char *gpio) {
 	struct gpiod_chip *chip = gpiod_chip_open(gpio);
-	if (!chip)
-	{
-		fprintf(stderr, "falha ao abrir gpiochip[%s]  [%s]\n", gpio, strerror(errno));
+	if (!chip) {
+		fprintf(stderr, "falha ao abrir gpiochip[%s]  [%s]\n", gpio,
+				strerror(errno));
 		exit(EXIT_FAILURE);
 	}
 	return chip;
 }
 
-struct gpiod_line *openLine(struct gpiod_chip *chip, int lineNumber)
-{
+struct gpiod_line* openLine(struct gpiod_chip *chip, int lineNumber) {
 	struct gpiod_line *line = gpiod_chip_get_line(chip, lineNumber);
-	if (!line)
-	{
+	if (!line) {
 		gpiod_chip_close(chip);
-		fprintf(stderr, "falha ao obter gpiochip[?] linha [%d]  [%s]\n", lineNumber, strerror(errno));
+		fprintf(stderr, "falha ao obter gpiochip[?] linha [%d]  [%s]\n",
+				lineNumber, strerror(errno));
 		exit(EXIT_FAILURE);
 	}
 	return line;
 }
 
-void configOutput(struct gpiod_line *line)
-{
+void configOutput(struct gpiod_line *line) {
 	int ret = gpiod_line_request_output(line, "gpio", 0);
-	if (ret == -1)
-	{
-		fprintf(stderr, "falha no configOutput line[?] [%s]\n", strerror(errno));
+	if (ret == -1) {
+		fprintf(stderr, "falha no configOutput line[?] [%s]\n",
+				strerror(errno));
 		exit(EXIT_FAILURE);
 	}
 }
 
-void setValue(struct gpiod_line *line, int value)
-{
+void setValue(struct gpiod_line *line, int value) {
 	int ret = gpiod_line_set_value(line, value);
-	if (ret == -1)
-	{
-		fprintf(stderr, "falha no setValue line[?] value[%d]  [%s]\n", value, strerror(errno));
+	if (ret == -1) {
+		fprintf(stderr, "falha no setValue line[?] value[%d]  [%s]\n", value,
+				strerror(errno));
 		exit(EXIT_FAILURE);
 	}
 }
 
-void teste()
-{
+void teste() {
 	struct gpiod_chip *chip1 = openGPIOChip("/dev/gpiochip1");
 	struct gpiod_chip *chip3 = openGPIOChip("/dev/gpiochip3");
 
@@ -63,8 +58,11 @@ void teste()
 	struct gpiod_line *led5 = openLine(chip3, 19);
 	configOutput(led5);
 
-	for (int i = 0; i < 5; i++)
-	{
+	struct gpiod_line *usb = openLine(chip3, 21);
+	configOutput(usb);
+	setValue(usb, 1);
+
+	while (true) {
 		setValue(led1, 1);
 		setValue(led2, 0);
 		setValue(led3, 1);
@@ -90,8 +88,7 @@ void teste()
 	gpiod_chip_close(chip3);
 }
 
-int main()
-{
+int main() {
 
 	teste();
 }
