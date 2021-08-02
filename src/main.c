@@ -34,6 +34,14 @@ void configOutput(struct gpiod_line *line) {
 	}
 }
 
+void configInput(struct gpiod_line *line) {
+	int ret = gpiod_line_request_input(line, "gpio");
+	if (ret == -1) {
+		fprintf(stderr, "falha no configInput line[?] [%s]\n", strerror(errno));
+		exit(EXIT_FAILURE);
+	}
+}
+
 void setValue(struct gpiod_line *line, int value) {
 	int ret = gpiod_line_set_value(line, value);
 	if (ret == -1) {
@@ -43,7 +51,12 @@ void setValue(struct gpiod_line *line, int value) {
 	}
 }
 
+int getValue(struct gpiod_line *line) {
+	return gpiod_line_get_value(line);
+}
+
 void teste() {
+	struct gpiod_chip *chip0 = openGPIOChip("/dev/gpiochip0");
 	struct gpiod_chip *chip1 = openGPIOChip("/dev/gpiochip1");
 	struct gpiod_chip *chip3 = openGPIOChip("/dev/gpiochip3");
 
@@ -62,13 +75,21 @@ void teste() {
 	configOutput(usb);
 	setValue(usb, 1);
 
+	struct gpiod_line *bt1 = openLine(chip0, 7);
+	configInput(bt1);
+	struct gpiod_line *bt2 = openLine(chip0, 19);
+	configInput(bt2);
+	struct gpiod_line *bt3 = openLine(chip1, 13);
+	configInput(bt3);
+
 	while (true) {
 		setValue(led1, 1);
 		setValue(led2, 0);
 		setValue(led3, 1);
 		setValue(led4, 0);
 		setValue(led5, 1);
-		printf("LED on\r\n");
+
+		printf("LED on    - bt[%d %d %d]\n", getValue(bt1),getValue(bt2),getValue(bt3));
 		sleep(1);
 		setValue(led1, 0);
 		setValue(led2, 1);
@@ -84,6 +105,10 @@ void teste() {
 	gpiod_line_release(led3);
 	gpiod_line_release(led4);
 	gpiod_line_release(led5);
+	gpiod_line_release(bt1);
+	gpiod_line_release(bt2);
+	gpiod_line_release(bt3);
+	gpiod_chip_close(chip0);
 	gpiod_chip_close(chip1);
 	gpiod_chip_close(chip3);
 }
