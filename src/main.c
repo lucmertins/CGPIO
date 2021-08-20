@@ -4,6 +4,13 @@
 #include <string.h>
 #include <unistd.h>
 
+/*
+ * https://beagleboard.org/static/librobotcontrol/group___a_d_c.html
+ * https://forum.beagleboard.org/t/adc-reading-from-kernel-module/27475/2
+ * https://github.com/torvalds/linux/blob/master/tools/iio/iio_generic_buffer.c
+ *
+ * "/sys/bus/iio/devices/iio:device0/in_voltage"
+ */
 struct gpiod_chip* openGPIOChip(char *gpio) {
 	struct gpiod_chip *chip = gpiod_chip_open(gpio);
 	if (!chip) {
@@ -55,6 +62,30 @@ int getValue(struct gpiod_line *line) {
 	return gpiod_line_get_value(line);
 }
 
+int adc(int pin) {
+	int BUFFER_LENGTH = 1000;
+	char file_name[500];
+	int value;
+	char buffer[BUFFER_LENGTH];
+	char intBuffer[BUFFER_LENGTH];
+	FILE *fd;
+	sprintf(file_name, "/sys/bus/iio/devices/iio:device0/in_voltage%d_raw",pin);
+	fd = fopen(file_name, "r");
+	if (fd == NULL) {
+		fprintf(stderr, "falha ao abrir analógico para leitura\n");
+		exit(EXIT_FAILURE);
+	}
+	if (fread(buffer, sizeof(char), BUFFER_LENGTH, fd) == -1) {
+		fprintf(stderr, "falha na leitura do analógico\n");
+		exit(EXIT_FAILURE);
+	}
+
+	fclose(fd);
+	memcpy(intBuffer, buffer, BUFFER_LENGTH);
+	intBuffer[BUFFER_LENGTH - 1] = '\0';
+	value = atoi(intBuffer);
+	return value;
+}
 void teste() {
 	struct gpiod_chip *chip0 = openGPIOChip("/dev/gpiochip0");
 	struct gpiod_chip *chip1 = openGPIOChip("/dev/gpiochip1");
@@ -89,7 +120,8 @@ void teste() {
 		setValue(led4, 0);
 		setValue(led5, 1);
 
-		printf("LED on    - bt[%d %d %d]\n", getValue(bt1),getValue(bt2),getValue(bt3));
+		printf("LED on    - bt[%d %d %d]  adc [%d]\n", getValue(bt1),
+				getValue(bt2), getValue(bt3), adc(2));
 		sleep(1);
 		setValue(led1, 0);
 		setValue(led2, 1);
@@ -116,4 +148,5 @@ void teste() {
 int main() {
 
 	teste();
+
 }
